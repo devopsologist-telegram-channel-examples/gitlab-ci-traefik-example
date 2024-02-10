@@ -1,1 +1,1 @@
-# gitlab-ci-traefik-example
+Пример для канала https://t.me/DevOpsologist

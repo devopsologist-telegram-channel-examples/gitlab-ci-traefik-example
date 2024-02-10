@@ -1,0 +1,13 @@
+stages:
+    - deploy
+deploy:
+    stage: deploy
+    script:
+        - scp -P 12345 docker-compose.yaml config.toml gitlab-deploy@stage:/home/gitlab-deploy/traefik
+        - ssh -p 12345 gitlab-deploy@stage "cd /home/gitlab-deploy/traefik && TRAEFIK_USERS=${TRAEFIK_USERS} docker compose -p traefik pull"
+        - ssh -p 12345 gitlab-deploy@stage "cd /home/gitlab-deploy/traefik && TRAEFIK_USERS=${TRAEFIK_USERS} docker compose -p traefik down || true"
+        - ssh -p 12345 gitlab-deploy@stage "cd /home/gitlab-deploy/traefik && TRAEFIK_USERS=${TRAEFIK_USERS} docker compose -p traefik up -d"
+    only:
+        - main
+    tags:
+        - traefik

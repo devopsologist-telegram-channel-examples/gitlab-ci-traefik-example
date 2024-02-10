@@ -1,0 +1,41 @@
+version: "3.8"
+services:
+    traefik:
+        image: traefik:v3.0
+        command:
+            --api
+            --accessLog=true
+            --metrics.prometheus=true
+            --providers.file.filename=/config/config.toml
+            --providers.docker=true
+            --providers.docker.watch=true
+            --providers.docker.exposedByDefault=false
+            --entryPoints.http.address=:80
+            --entryPoints.http.http.redirections.entrypoint.to=https
+            --entryPoints.http.http.redirections.entrypoint.scheme=https
+            --entryPoints.https.address=:443
+            --entryPoints.postgres.address=:5433
+        ports:
+            - '443:443'
+            - '80:80'
+            - '5433:5433'
+        networks:
+            - traefik-public
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - /etc/letsencrypt:/certs:ro
+            - ./config.toml:/config/config.toml:ro
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik-public
+
+            - traefik.http.routers.traefik-https.entryPoints=https
+            - traefik.http.routers.traefik-https.rule=Host(`traefik.stage.example.com`)
+            - traefik.http.routers.traefik-https.service=api@internal
+            - traefik.http.routers.traefik-https.tls=true
+            - traefik.http.middlewares.traefik-auth.basicAuth.users=${TRAEFIK_USERS}
+            - traefik.http.routers.traefik-https.middlewares=traefik-auth
+
+networks:
+    traefik-public:
+        external: true
